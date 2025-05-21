@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import logging
 
-project_root = Path(file).parent
+project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root / "lib"))
 
 from bot_lib.bot_engine import BotEngine
@@ -12,10 +12,11 @@ from lib.quiz_lib.quiz import QuizSingleton
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(name)
+logger = logging.getLogger(__name__)
 
 
-if name == "main":
+if __name__ == "main":
+    
     config_files = {
         'database': 'config/database.yml',
         'locales': 'config/locales.yml',
