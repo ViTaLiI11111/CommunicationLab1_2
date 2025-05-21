@@ -1,5 +1,3 @@
-# lib/bot_lib/db_connector.py
-
 import yaml
 from pathlib import Path
 from sqlalchemy import create_engine, text
