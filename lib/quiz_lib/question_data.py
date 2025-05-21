@@ -18,7 +18,6 @@ class QuestionData:
         self.load_data()
 
     def to_yaml(self):
-        import yaml
         return yaml.dump([q.to_h() for q in self.collection])
 
     def save_to_yaml(self, filename="questions.yml"):
@@ -26,7 +25,6 @@ class QuestionData:
             f.write(self.to_yaml())
 
     def to_json(self):
-        import json
         return json.dumps([q.to_h() for q in self.collection])
 
     def save_to_json(self, filename="questions.json"):
@@ -47,7 +45,6 @@ class QuestionData:
             block(filename)
 
     def in_thread(self, block):
-        import threading
         thread = threading.Thread(target=block)
         self.threads.append(thread)
         thread.start()

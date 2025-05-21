@@ -1,4 +1,3 @@
-# lib/bot_lib/message_handler.py
 from telegram import Update
 from telegram.ext import ContextTypes
 from sqlalchemy.orm import Session
