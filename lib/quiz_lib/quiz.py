@@ -1,34 +1,30 @@
-
 import threading
-import os
 from pathlib import Path
-
 
 class QuizSingleton:
     _instance = None
     _lock = threading.Lock()
 
-    def new(cls):
+    def __new__(cls):
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
-                    cls._instance = super(QuizSingleton, cls).new(cls)
-                    cls._instance.yaml_dir = 'config/questions'
-                    cls._instance.answers_dir = 'quiz_answers'
-                    cls._instance.in_ext = 'yml'
-                    cls._instance.log_dir = 'log'
-                    cls._instance._initialized = True
+                    cls._instance = super().__new__(cls)
+                    cls._instance.yaml_dir = None
+                    cls._instance.answers_dir = None
+                    cls._instance.in_ext = None
+                    cls._instance.log_dir = None
         return cls._instance
-
-    @classmethod
-    def config(cls, configure_func):
-        instance = cls()
-        if instance._initialized:
-             configure_func(instance)
-             instance._initialized = False
-        else:
-             pass
 
     def get_project_path(self, relative_path):
         project_root = Path(__file__).parent.parent.parent
         return project_root / relative_path
+
+    def is_configured(self):
+        return self.yaml_dir is not None and \
+               self.answers_dir is not None and \
+               self.in_ext is not None and \
+               self.log_dir is not None
+
+    def __repr__(self):
+        return f"QuizSingleton(yaml_dir='{self.yaml_dir}', answers_dir='{self.answers_dir}', in_ext='{self.in_ext}', log_dir='{self.log_dir}')"

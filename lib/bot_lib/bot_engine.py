@@ -9,7 +9,7 @@ from .message_handler import start_command, stop_command, command_c, handle_answ
 from .db_connector import DatabaseConnector
 from .localization import Localization
 from lib.quiz_lib.question_data import QuestionData
-from lib.quiz_lib.quiz import QuizSingleton 
+from lib.quiz_lib.quiz import QuizSingleton
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -19,24 +19,13 @@ class BotEngine:
     def __init__(self, config_paths):
         self.config_paths = config_paths
 
-        self._configure_quiz_singleton()
-
-        self._load_config() 
+        self._load_config()
         self._setup_dependencies()
         self._setup_application()
         self._register_handlers()
 
 
-    def _configure_quiz_singleton(self):
-        """Налаштовує Singleton конфігурації quiz_lib."""
-        quiz_cfg = QuizSingleton()
-        quiz_cfg.yaml_dir = self.config_paths.get('questions_dir', quiz_cfg.yaml_dir)
-        quiz_cfg.answers_dir = self.config_paths.get('answers_dir', quiz_cfg.answers_dir)
-        quiz_cfg.in_ext = self.config_paths.get('questions_ext', quiz_cfg.in_ext)
-        quiz_cfg.log_dir = self.config_paths.get('log_dir', quiz_cfg.log_dir)
-       
     def _load_config(self):
-        """Завантажує конфігурації, включаючи токен бота."""
         try:
             project_root = Path(__file__).parent.parent.parent
             secrets_path = project_root / self.config_paths.get('secrets', 'config/secrets.yml')
@@ -51,9 +40,9 @@ class BotEngine:
         except Exception as e:
              logger.critical(f"Failed to load bot token: {e}", exc_info=True)
              raise
-            
+
+
     def _load_secrets_from_path(self, secrets_path):
-         """Внутрішній метод для завантаження секретів."""
          try:
              project_root = Path(__file__).parent.parent.parent
              filepath = project_root / secrets_path
@@ -71,14 +60,13 @@ class BotEngine:
 
          except yaml.YAMLError as e:
              logger.error(f"Error parsing secrets file: {e}")
-             return {} 
+             return {}
          except Exception as e:
              logger.error(f"Failed to load secrets from {secrets_path}: {e}")
-             return {} 
+             return {}
 
 
     def _setup_dependencies(self):
-        """Ініціалізує залежності (БД, локалізація, дані питань)."""
         db_config_path = self.config_paths.get('database', 'config/database.yml')
         secrets_config_path = self.config_paths.get('secrets', 'config/secrets.yml')
         self.db_connector = DatabaseConnector(config_path=db_config_path, secrets_path=secrets_config_path)
@@ -93,15 +81,22 @@ class BotEngine:
              logger.critical("No questions loaded. Quiz will not function.")
              raise SystemExit("No questions loaded.")
 
+        quiz_singleton = QuizSingleton()
+
+        log_dir_path = Path(quiz_singleton.get_project_path(quiz_singleton.log_dir))
+        log_dir_path.mkdir(parents=True, exist_ok=True)
+
         try:
-            self.question_data.save_to_json()
-            logger.info(f"Questions data saved to {QuizSingleton().log_dir}/testing.json")
+            json_filepath = log_dir_path / "testing.json"
+            self.question_data.save_to_json(filename=str(json_filepath))
+            logger.info(f"Questions data saved to {json_filepath}")
         except Exception as e:
             logger.error(f"Failed to save questions data to JSON: {e}", exc_info=True)
 
         try:
-            self.question_data.save_to_yaml()
-            logger.info(f"Questions data saved to {QuizSingleton().log_dir}/testing.yml")
+            yaml_filepath = log_dir_path / "testing.yml"
+            self.question_data.save_to_yaml(filename=str(yaml_filepath))
+            logger.info(f"Questions data saved to {yaml_filepath}")
         except Exception as e:
             logger.error(f"Failed to save questions data to YAML: {e}", exc_info=True)
 
@@ -128,6 +123,7 @@ class BotEngine:
         self.application.add_handler(CommandHandler("start", lambda update, context: start_command(update, context, self.handler_deps)))
         self.application.add_handler(CommandHandler("stop", lambda update, context: stop_command(update, context, self.handler_deps)))
         self.application.add_handler(CommandHandler("c", lambda update, context: command_c(update, context, self.handler_deps)))
+
 
         self.application.add_handler(CallbackQueryHandler(lambda update, context: handle_answer_callback(update, context, self.handler_deps)))
 

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    
+
     config_files = {
         'database': 'config/database.yml',
         'locales': 'config/locales.yml',
@@ -39,12 +39,12 @@ if __name__ == "__main__":
                      if db_config and db_config.get('adapter') == 'sqlite3':
                          db_file_path_str = db_config.get('database')
                          if db_file_path_str:
-                             db_directory = project_root / db_file_path_str
-                             db_directory.parent.mkdir(parents=True, exist_ok=True)
+                             db_directory = project_root / Path(db_file_path_str).parent
+                             db_directory.mkdir(parents=True, exist_ok=True)
                          else:
-                             logger.warning("SQLite database path not specified in config.")
+                             logger.warning("SQLite database path not specified in config/database.yml")
              else:
-                 logger.warning(f"Database config file not found at {db_config_path}. Cannot ensure SQLite directory exists.")
+                 logger.warning(f"Database config file not found at {db_config_path}. Cannot ensure SQLite directory exists based on config.")
 
         except FileNotFoundError:
              logger.error(f"Database config file not found at {config_files['database']}")
@@ -53,15 +53,21 @@ if __name__ == "__main__":
              logger.error(f"Error parsing database config: {e}")
              sys.exit(1)
         except Exception as e:
-            logger.error(f"Error creating database directory: {e}")
+            logger.error(f"Error ensuring database directory exists: {e}")
             sys.exit(1)
 
-
+        logger.info("Configuring QuizSingleton...")
         quiz_singleton_cfg = QuizSingleton()
         quiz_singleton_cfg.yaml_dir = config_files['questions_dir']
         quiz_singleton_cfg.answers_dir = config_files['answers_dir']
         quiz_singleton_cfg.log_dir = config_files['log_dir']
+        quiz_singleton_cfg.in_ext = config_files.get('questions_ext', 'yml')
 
+        if not quiz_singleton_cfg.is_configured():
+             logger.critical("QuizSingleton was not properly configured.")
+             sys.exit(1)
+
+        logger.info(f"QuizSingleton configured: {quiz_singleton_cfg}")
 
         logger.info("Initializing BotEngine...")
         bot_engine = BotEngine(config_files)
