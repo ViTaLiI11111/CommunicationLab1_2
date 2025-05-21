@@ -30,5 +30,5 @@ class QuizSingleton:
              pass
 
     def get_project_path(self, relative_path):
-        project_root = Path(file).parent.parent.parent
+        project_root = Path(__file__).parent.parent.parent
         return project_root / relative_path
