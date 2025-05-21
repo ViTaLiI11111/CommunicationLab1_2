@@ -1,4 +1,3 @@
-# lib/bot_lib/message_handler.py
 from telegram import Update
 from telegram.ext import ContextTypes
 from sqlalchemy.orm import Session
@@ -38,7 +37,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
 
     session = get_db_session(deps)
     if not session:
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code)) # Додано мову
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code))  
          return
 
     try:
@@ -68,7 +67,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
 
     except Exception as e:
          logger.error(f"Error in start_command for user {user_id}: {e}", exc_info=True)
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code)) # Додано мову
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code))
          session.rollback()
     finally:
         session.close()
@@ -80,7 +79,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps:
 
     session = get_db_session(deps)
     if not session:
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code)) # Додано мову
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code))
          return
 
     try:
@@ -100,7 +99,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps:
 
     except Exception as e:
          logger.error(f"Error in stop_command for user {user_id}: {e}", exc_info=True)
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code)) # Додано мову
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code)) 
          session.rollback()
     finally:
         session.close()
@@ -127,7 +126,7 @@ async def command_c(update: Update, context: ContextTypes.DEFAULT_TYPE, deps: Ha
 
         session = get_db_session(deps)
         if not session:
-             await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code)) # Додано мову
+             await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code))
              return
 
         try:
@@ -151,8 +150,7 @@ async def command_c(update: Update, context: ContextTypes.DEFAULT_TYPE, deps: Ha
 
         except Exception as e:
             logger.error(f"Error in command_c for user {user_id}: {e}", exc_info=True)
-            await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code)) # Додано мову
-            session.rollback()
+            await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code))
         finally:
              session.close()
 
@@ -248,7 +246,7 @@ async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
 
     question = deps.quiz_data.collection[question_index]
      
-    question_text = f"{question_index + 1}/{len(deps.quiz_data.collection)}. {question.question_body}\n\n" # Використовуємо question_text атрибут
+    question_text = f"{question_index + 1}/{len(deps.quiz_data.collection)}. {question.question_body}\n\n"
 
     reply_markup = format_answers_as_inline_keyboard(question)
 
