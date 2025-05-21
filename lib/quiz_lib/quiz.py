@@ -1,48 +1,47 @@
+# lib/quiz_lib/quiz.py
+import threading
+import os
+from pathlib import Path
+
+# Використовуємо патерн Singleton для конфігурації
 class QuizSingleton:
     _instance = None
+    _lock = threading.Lock() # Для потокобезпеки, хоча конфігурація, як правило, відбувається в одному потоці
 
-    def __new__(cls):
+    def new(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.yaml_dir = None
-            cls._instance.in_ext = None
-            cls._instance.answers_dir = None
-            cls._instance.log_dir = None
+            with cls._lock:
+                # Перевіряємо ще раз після отримання блокування
+                if cls._instance is None:
+                    cls._instance = super(QuizSingleton, cls).new(cls)
+                    # Ініціалізуємо з дефолтними значеннями
+                    cls._instance.yaml_dir = 'config/questions'
+                    cls._instance.answers_dir = 'quiz_answers'
+                    cls._instance.in_ext = 'yml'
+                    cls._instance.log_dir = 'log'
+                    cls._instance._initialized = True # Внутрішній прапорець ініціалізації
         return cls._instance
 
     @classmethod
-    def config(cls, block):
+    def config(cls, configure_func):
+        """Метод для конфігурування Singleton."""
         instance = cls()
-        block(instance)
+        if instance._initialized:
+             # Викликаємо функцію, яка налаштовує екземпляр
+             configure_func(instance)
+             instance._initialized = False # Позначаємо як сконфігурований (або можна прапорець "сконфігуровано")
+             # logger.info("QuizSingleton configured.") # Використовуйте логер, якщо він доступний тут
+        else:
+             # Це може статися, якщо config викликається повторно
+             pass # Або логуйте попередження
 
-    @property
-    def yaml_dir(self):
-        return self._yaml_dir
+    # Можна додати метод для отримання шляхів відносно кореня проекту
+    def get_project_path(self, relative_path):
+        """Повертає абсолютний шлях відносно кореня проекту."""
+        # Припускаємо, що цей файл знаходиться в lib/quiz_lib/
+        project_root = Path(file).parent.parent.parent
+        return project_root / relative_path
 
-    @yaml_dir.setter
-    def yaml_dir(self, value):
-        self._yaml_dir = value
-
-    @property
-    def in_ext(self):
-        return self._in_ext
-
-    @in_ext.setter
-    def in_ext(self, value):
-        self._in_ext = value
-
-    @property
-    def answers_dir(self):
-        return self._answers_dir
-
-    @answers_dir.setter
-    def answers_dir(self, value):
-        self._answers_dir = value
-
-    @property
-    def log_dir(self):
-        return self._log_dir
-
-    @log_dir.setter
-    def log_dir(self, value):
-        self._log_dir = value
+# Дефолтна конфігурація (може бути перевизначена в main.py)
+# Не викликайте config() тут, це має робити main.py або BotEngine після додавання config_paths
+# QuizSingleton.config(lambda cfg: ...)
