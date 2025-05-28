@@ -15,7 +15,7 @@ en:
   jump_to_q: "Jumping to question {q_num}."
   quiz_already_finished: "The quiz is already finished."
 
-ua:
+uk:
   greeting_message: "Привіт! Почнемо роботу!"
   farewell_message: "Прощавай! До зустрічі!"
   quiz_already_active: "У вас вже активна сесія тестування."

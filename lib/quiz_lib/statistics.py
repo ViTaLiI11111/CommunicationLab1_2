@@ -1,3 +1,4 @@
+# не юзається
 class Statistics:
     def __init__(self, writer):
         self.correct_answers = 0

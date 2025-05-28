@@ -3,8 +3,8 @@ from telegram.ext import ContextTypes
 from sqlalchemy.orm import Session
 import logging
 import datetime
-from pathlib import Path 
-import os 
+from pathlib import Path
+import os
 
 from .db_connector import DatabaseConnector
 from .models import User, QuizSession
@@ -37,7 +37,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
 
     session = get_db_session(deps)
     if not session:
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code))  
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('database_error', lang=update.effective_user.language_code))
          return
 
     try:
@@ -45,7 +45,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
         if not user:
             user = User(id=user_id, username=username)
             session.add(user)
-            session.commit() 
+            session.commit()
             session.refresh(user)
 
 
@@ -99,7 +99,7 @@ async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE, deps:
 
     except Exception as e:
          logger.error(f"Error in stop_command for user {user_id}: {e}", exc_info=True)
-         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code)) 
+         await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('internal_error', lang=update.effective_user.language_code))
          session.rollback()
     finally:
         session.close()
@@ -201,7 +201,7 @@ async def handle_answer_callback(update: Update, context: ContextTypes.DEFAULT_T
              return
 
         current_question = deps.quiz_data.collection[current_question_index]
-         
+
         if chosen_char not in current_question.question_answers:
              logger.warning(f"User {user_id} sent invalid answer char '{chosen_char}' for question index {current_question_index}.")
              await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('invalid_answer_option', lang=user_lang))
@@ -225,7 +225,7 @@ async def handle_answer_callback(update: Update, context: ContextTypes.DEFAULT_T
         quiz_session.current_question_index += 1
         session.commit()
 
-        await send_next_question_or_finish(update, context, deps, quiz_session)
+        await send_next_question_or_finish(update, context, deps, quiz_session, session)
 
     except Exception as e:
          logger.error(f"Error in handle_answer_callback for user {user_id}: {e}", exc_info=True)
@@ -245,7 +245,7 @@ async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
         return
 
     question = deps.quiz_data.collection[question_index]
-     
+
     question_text = f"{question_index + 1}/{len(deps.quiz_data.collection)}. {question.question_body}\n\n"
 
     reply_markup = format_answers_as_inline_keyboard(question)
@@ -256,15 +256,15 @@ async def send_question(update: Update, context: ContextTypes.DEFAULT_TYPE, deps
             text=question_text,
             reply_markup=reply_markup
         )
-         
+
     except Exception as e:
          logger.error(f"Error sending question {question_index} to chat {chat_id}: {e}", exc_info=True)
          await context.bot.send_message(chat_id=chat_id, text=deps.loc.get_message('send_question_error', lang=user_lang))
 
 
-async def send_next_question_or_finish(update: Update, context: ContextTypes.DEFAULT_TYPE, deps: HandlerDependencies, quiz_session: QuizSession):
+async def send_next_question_or_finish(update: Update, context: ContextTypes.DEFAULT_TYPE, deps: HandlerDependencies, quiz_session: QuizSession, session: Session):
     chat_id = update.effective_chat.id
-    user_id = quiz_session.user_id 
+    user_id = quiz_session.user_id
     user_lang = update.effective_user.language_code
     next_question_index = quiz_session.current_question_index
     total_questions = len(deps.quiz_data.collection)
@@ -274,6 +274,13 @@ async def send_next_question_or_finish(update: Update, context: ContextTypes.DEF
     else:
         quiz_session.status = 'finished'
         quiz_session.end_time = datetime.datetime.now()
+
+        try:
+            session.commit()
+            logger.info(f"Quiz session {quiz_session.id} for user {user_id} marked as finished.")
+        except Exception as e:
+             logger.error(f"Error committing session status 'finished' for user {user_id}: {e}", exc_info=True)
+             session.rollback()
 
         correct_count = quiz_session.correct_answers_count
         percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
@@ -287,7 +294,7 @@ async def send_next_question_or_finish(update: Update, context: ContextTypes.DEF
         await context.bot.send_message(chat_id=chat_id, text=report_msg)
 
         logger.info(f"Quiz finished for user {user_id}. Report: {report_msg}")
-         
+
         try:
             quiz_singleton_cfg = QuizSingleton()
             answers_dir = quiz_singleton_cfg.get_project_path(quiz_singleton_cfg.answers_dir)

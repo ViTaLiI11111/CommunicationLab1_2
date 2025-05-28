@@ -1,3 +1,4 @@
+# не юзається
 from pathlib import Path
 from .quiz import QuizSingleton
 

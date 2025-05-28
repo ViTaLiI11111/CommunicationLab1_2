@@ -1,3 +1,4 @@
+# не юзається
 class InputReader:
     def read(self, welcome_message=None, validator=None, error_message=None, process=None):
         while True:
